@@ -1,24 +1,39 @@
-﻿using System;
-using SpRestaurant.Hardware;
+﻿using SpRestaurant.Hardware;
 using SpRestaurant.Models;
 using SpRestaurant.Services.CookingService;
 using SpRestaurant.Services.PaymentService;
 using SpRestaurant.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SpRestaurant
 {
     public class SpRestaurant
     {
-        readonly HpPrinter printer = new HpPrinter();
-        readonly  PaymentService paymentService = new PaymentService();
-        readonly CookingService cookingService = new CookingService();
+        private readonly IMachine _iMachine;
+        private readonly PaymentService _paymentService = new PaymentService();
+        private readonly CookingService _cookingService = new CookingService();
+        Dictionary<string, Func<OrderItem, double>> dict;
 
-        public void ExecuteOrder(Order order, PaymentDetails paymentDetails, bool printReceipt)
+        public SpRestaurant()
         {
-            CalculateAmount(order);
-            paymentService.Charge(paymentDetails, order);
+            _iMachine = new HpPrinter();
+            dict = new Dictionary<string, Func<OrderItem, double>>
+            {
+                { Constants.CheeseBurger, CalculateCheeseBurgerMenu },
+                { Constants.Drink, CalculateDrink },
+                { Constants.CheeseBurgerMenu, CalculateCheeseBurger }
+            };
+        }
+        public void ExecuteOrder(Order order,
+            PaymentDetails paymentDetails, bool printReceipt)
+        {
 
-            cookingService.Prepare(order);
+            CalculateAmount(order);
+            _paymentService.Charge(paymentDetails, order);
+
+            _cookingService.Prepare(order);
 
             if (printReceipt)
             {
@@ -26,25 +41,25 @@ namespace SpRestaurant
             }
         }
 
+        private double CalculateDrink(OrderItem item)
+        {
+            var setsOfThree = item.Quantity / 3;
+            return (item.Quantity - setsOfThree) * item.Price;
+        }
+
+        private double CalculateCheeseBurger(OrderItem item)
+        {
+            return item.Price * item.Quantity;
+        }
+        private double CalculateCheeseBurgerMenu(OrderItem item)
+        {
+            return item.Price * item.Quantity * 0.9;
+        }
+
         private void CalculateAmount(Order order)
         {
-            var total = 0d;
-            foreach (var item in order.Items)
-            {
-                if (item.ItemId == Constants.Drink)
-                {
-                    var setsOfThree = item.Quantity / 3;
-                    total += (item.Quantity - setsOfThree) * item.Price;
-                }
-                else if (item.ItemId == Constants.CheeseBurger)
-                {
-                    total += item.Price * item.Quantity;
-                }
-                else if (item.ItemId == Constants.CheeseBurgerMenu)
-                {
-                    total += item.Price * item.Quantity * 0.9;
-                }
-            }
+            //is is ClassDrink , is 
+            var total = order.Items.Sum(item => dict[item.ItemId](item));
             order.TotalAmount = total;
         }
 
@@ -65,7 +80,7 @@ namespace SpRestaurant
 
                 try
                 {
-                    printer.Print(receipt);
+                    _iMachine.Print(receipt);
                 }
                 catch (Exception ex)
                 {

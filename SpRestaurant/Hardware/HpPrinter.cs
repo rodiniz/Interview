@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SpRestaurant.Models;
+﻿using SpRestaurant.Models;
 
 namespace SpRestaurant.Hardware
 {
     public class HpPrinter : IMachine
     {
-        public void Print(Receipt receipt)
+        public void Print(Receipt item)
         {
             //Doing some printing            
         }

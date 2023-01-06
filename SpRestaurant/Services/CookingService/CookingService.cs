@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SpRestaurant.Models;
+﻿using SpRestaurant.Models;
 using SpRestaurant.Models.MenuItems;
+using System.Collections.Generic;
 
 namespace SpRestaurant.Services.CookingService
 {
     public class CookingService
     {
-        private readonly Dictionary<string, MenuItem> restaurantMenu = new Dictionary<string, MenuItem>
+        private readonly Dictionary<string, MenuItem> _restaurantMenu = new Dictionary<string, MenuItem>
         {
             { Constants.Drink, new Drink()},
             { Constants.CheeseBurger, new CheeseBurger()},
@@ -21,17 +17,18 @@ namespace SpRestaurant.Services.CookingService
         {
             foreach (var item in order.Items)
             {
-                var menuItem = restaurantMenu[item.ItemId];
-                if (menuItem is CheeseBurgerMenu || menuItem is CheeseBurger)
+                var menuItem = _restaurantMenu[item.ItemId];
+                switch (menuItem)
                 {
-                    menuItem.GetIngredients();
-                    menuItem.Cook();
-                    menuItem.SendToClient();
-
-                }
-                else if (menuItem is Drink)
-                {
-                    menuItem.SendToClient();
+                    case CheeseBurgerMenu _:
+                    case CheeseBurger _:
+                        menuItem.GetIngredients();
+                        menuItem.Cook();
+                        menuItem.SendToClient();
+                        break;
+                    case Drink _:
+                        menuItem.SendToClient();
+                        break;
                 }
             }
         }
